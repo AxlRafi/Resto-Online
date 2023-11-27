@@ -4,7 +4,27 @@ import Staff from "../models/StaffModel.js";
 import { Op } from "sequelize";
 export const getSales = async (req, res) => {
   try {
+    const { month, year } = req.query;
+    const whereClause = {};
+    if (month && year) {
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0);
+      whereClause.date_sales = {
+        [Op.between]: [startDate, endDate],
+      };
+    }
+
+    const uniqueYears = await Sales.aggregate("date_sales", "DISTINCT", {
+      plain: false,
+      where: whereClause,
+    });
+
+    const years = uniqueYears.map((item) =>
+      new Date(item["DISTINCT"]).getFullYear()
+    );
+
     let response;
+
     if (req.role === "admin") {
       response = await Sales.findAll({
         attributes: [
@@ -22,6 +42,7 @@ export const getSales = async (req, res) => {
             attributes: ["name", "email"],
           },
         ],
+        where: whereClause,
       });
     } else {
       response = await Sales.findAll({
@@ -36,6 +57,7 @@ export const getSales = async (req, res) => {
         ],
         where: {
           userId: req.userId,
+          ...whereClause,
         },
         include: [
           {
@@ -45,11 +67,13 @@ export const getSales = async (req, res) => {
         ],
       });
     }
-    res.status(200).json(response);
+    res.status(200).json({ sales: response, years });
   } catch (error) {
+    console.error("Error in getSales:", error);
     res.status(500).json({ msg: error.message });
   }
 };
+
 export const getSalesById = async (req, res) => {
   try {
     const sales = await Sales.findOne({
@@ -107,6 +131,7 @@ export const getSalesById = async (req, res) => {
     res.status(500).json({ msg: error.message });
   }
 };
+
 export const createSales = async (req, res) => {
   const { product_name, qty, price, sum } = req.body;
   const created_at = new Date();
@@ -147,34 +172,29 @@ export const updateSales = async (req, res) => {
         uuid: req.params.id,
       },
     });
+
     if (!sales) return res.status(404).json({ msg: "Data tidak ditemukan" });
-    const { name, qty, price, sum } = req.body;
-    if (req.role === "admin") {
+
+    const { product_name, qty, price, sum } = req.body;
+
+    if (req.role === "admin" || req.userId === sales.userId) {
       await Sales.update(
-        { name, qty, price, sum },
+        { product_name, qty, price, sum },
         {
           where: {
-            id: cart.id,
+            uuid: req.params.id,
           },
         }
       );
+      res.status(200).json({ msg: "Sales updated successfully" });
     } else {
-      if (req.userId !== sales.userId) return;
       res.status(403).json({ msg: "Akses terlarang" });
-      await Sales.update(
-        { name, qty, price, sum },
-        {
-          where: {
-            [Op.and]: [{ id: cart.id }, { userId: req.userId }],
-          },
-        }
-      );
     }
-    res.status(200).json({ msg: "Sales updated successfuly" });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }
 };
+
 export const deleteSales = async (req, res) => {
   try {
     const sales = await Sales.findOne({
@@ -182,25 +202,19 @@ export const deleteSales = async (req, res) => {
         uuid: req.params.id,
       },
     });
+
     if (!sales) return res.status(404).json({ msg: "Data tidak ditemukan" });
-    const { name, qty, price, sum } = req.body;
-    if (req.role === "admin") {
+
+    if (req.role === "admin" || req.userId === sales.userId) {
       await Sales.destroy({
         where: {
-          id: sales.id,
+          uuid: req.params.id,
         },
       });
+      res.status(200).json({ msg: "Sales deleted successfully" });
     } else {
-      if (req.userId !== sales.userId) return;
       res.status(403).json({ msg: "Akses terlarang" });
-
-      await Cart.destroy({
-        where: {
-          [Op.and]: [{ id: cart.id }, { userId: req.userId }],
-        },
-      });
     }
-    res.status(200).json({ msg: "sales deleted successfuly" });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }

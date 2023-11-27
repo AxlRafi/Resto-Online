@@ -123,6 +123,11 @@ const CartList = () => {
   };
 
   const deleteCart = async (Id) => {
+    await axios.delete(`http://localhost:5000/cart/${Id}`);
+    getCarts();
+  };
+
+  const deleteCarts = async (Id) => {
     await axios.delete(`http://localhost:5000/carts/${Id}`);
     getCarts();
   };
@@ -179,8 +184,8 @@ const CartList = () => {
 
   return (
     <div>
-      <h1 className="title">Carts</h1>
-      <h2 className="subtitle">List of Carts</h2>
+      <h1 className="title">Menu</h1>
+      <h2 className="subtitle">List of Menus</h2>
       <Link to="/carts/addlist" className="button is-primary mb-2">
         Add Item
       </Link>
@@ -213,7 +218,7 @@ const CartList = () => {
                   Edit
                 </Link>
                 <button
-                  onClick={() => deleteCart(cart.uuid)}
+                  onClick={() => deleteCarts(cart.uuid)}
                   className="button is-small is-danger"
                 >
                   Delete

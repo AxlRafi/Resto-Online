@@ -33,7 +33,6 @@ const FormAddToCart = () => {
     }
 
     try {
-      console.log(name);
       await axios.post(`http://localhost:5000/carts`, {
         product_name: name,
         qty: qty,

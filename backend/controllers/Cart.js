@@ -80,7 +80,6 @@ export const getCartById = async (req, res) => {
 };
 
 export const createCart = async (req, res) => {
-  //cart field
   const { product_name, qty, price } = req.body;
   try {
     const product = await Product.findOne({
@@ -94,7 +93,7 @@ export const createCart = async (req, res) => {
       return res.status(400).json({ msg: "Not enough stock available" });
     }
     await Cart.create({
-      product_name: product_name, // Use product_name for cart creation
+      product_name: product_name,
       qty: qty,
       price: price,
       userId: req.userId,
@@ -108,7 +107,6 @@ export const createCart = async (req, res) => {
         },
       }
     );
-
     res.status(201).json({ msg: "Order Created Successfully" });
   } catch (error) {
     res.status(500).json({ msg: error.message });
@@ -169,36 +167,36 @@ export const updateCart = async (req, res) => {
 };
 
 // Delete List di cart
-// export const deleteCart = async (req, res) => {
-//   try {
-//     const cart = await Cart.findOne({
-//       where: {
-//         uuid: req.params.id,
-//       },
-//     });
-//     if (!cart) return res.status(404).json({ msg: "Data tidak ditemukan" });
-//     const { name, qty, price } = req.body;
-//     if (req.role === "admin") {
-//       await Cart.destroy({
-//         where: {
-//           id: cart.id,
-//         },
-//       });
-//     } else {
-//       if (req.userId !== cart.userId) return;
-//       res.status(403).json({ msg: "Akses terlarang" });
+export const deleteCarts = async (req, res) => {
+  try {
+    const cart = await Cart.findOne({
+      where: {
+        uuid: req.params.id,
+      },
+    });
+    if (!cart) return res.status(404).json({ msg: "Data tidak ditemukan" });
+    const { name, qty, price } = req.body;
+    if (req.role === "admin") {
+      await Cart.destroy({
+        where: {
+          id: cart.id,
+        },
+      });
+    } else {
+      if (req.userId !== cart.userId) return;
+      res.status(403).json({ msg: "Akses terlarang" });
 
-//       await Cart.destroy({
-//         where: {
-//           [Op.and]: [{ id: cart.id }, { userId: req.userId }],
-//         },
-//       });
-//     }
-//     res.status(200).json({ msg: "Cart deleted successfuly" });
-//   } catch (error) {
-//     res.status(500).json({ msg: error.message });
-//   }
-// };
+      await Cart.destroy({
+        where: {
+          [Op.and]: [{ id: cart.id }, { userId: req.userId }],
+        },
+      });
+    }
+    res.status(200).json({ msg: "Cart deleted successfuly" });
+  } catch (error) {
+    res.status(500).json({ msg: error.message });
+  }
+};
 
 export const deleteCart = async (req, res) => {
   try {

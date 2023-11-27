@@ -43,16 +43,16 @@ const Sidebar = () => {
               <IoPricetag /> Sales
             </NavLink>
           </li>
-          <li>
-            <NavLink to={"/staffs"}>
-              <IoBriefcase /> Staffs
-            </NavLink>
-          </li>
         </ul>
         {user && user.role === "admin" && (
           <div>
             <p className="menu-label">Admin</p>
             <ul className="menu-list">
+              <li>
+                <NavLink to={"/staffs"}>
+                  <IoBriefcase /> Staffs
+                </NavLink>
+              </li>
               <li>
                 <NavLink to={"/users"}>
                   <IoPerson /> Users
